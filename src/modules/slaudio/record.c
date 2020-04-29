@@ -26,9 +26,9 @@ static char command[256];
 static int record_timer = 0;
 
 
-void slaudio_record_set(bool active)
+void slaudio_record_set(bool status)
 {
-	record = active;
+	record = status;
 }
 
 
@@ -56,7 +56,6 @@ static int openfile(struct session *sess)
 	time_t tnow = time(0);
 	struct tm *tm = localtime(&tnow);
 	FLAC__bool ok = true;
-	FLAC__StreamMetadata *meta[2];
 	FLAC__StreamEncoderInitStatus init_status;
 	FLAC__StreamMetadata_VorbisComment_Entry entry;
 	int err;
@@ -131,15 +130,15 @@ static int openfile(struct session *sess)
 	}
 
 	/* METADATA */
-	meta[0] = FLAC__metadata_object_new(
+	sess->meta[0] = FLAC__metadata_object_new(
 			FLAC__METADATA_TYPE_VORBIS_COMMENT);
-	meta[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING);
+	sess->meta[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING);
 
 	ok = FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(
 			&entry, "ENCODED_BY", "STUDIO LINK");
 
 	ok &= FLAC__metadata_object_vorbiscomment_append_comment(
-			meta[0], entry, /*copy=*/false);
+			sess->meta[0], entry, /*copy=*/false);
 
 	if (!ok) {
 		warning("slaudio/record: \
@@ -147,9 +146,9 @@ static int openfile(struct session *sess)
 		return ENOMEM;
 	}
 
-	meta[1]->length = 1234; /* padding length */
+	sess->meta[1]->length = 1234; /* padding length */
 
-	ok = FLAC__stream_encoder_set_metadata(sess->flac, meta, 2);
+	ok = FLAC__stream_encoder_set_metadata(sess->flac, sess->meta, 2);
 
 	if (!ok) {
 		warning("slaudio/record: \
@@ -165,6 +164,7 @@ static int openfile(struct session *sess)
 				FLAC ERROR: initializing encoder: %s\n",
 			  FLAC__StreamEncoderInitStatusString[init_status]);
 	}
+
 
 	return 0;
 }
@@ -220,14 +220,18 @@ static void *record_thread(void *arg)
 						close session record file\n");
 				FLAC__stream_encoder_finish(sess->flac);
 				FLAC__stream_encoder_delete(sess->flac);
+				FLAC__metadata_object_delete(sess->meta[0]);
+				FLAC__metadata_object_delete(sess->meta[1]);
 
 				sess->flac = NULL;
 
 				/* open folder on stop record
 				 * if record_time > 5min
 				 */
-				if (sess->local && record_timer > 300000)
+				if (sess->local && record_timer > 300000) {
 					ret = system(command);
+					if (ret) {}
+				}
 			}
 			record_timer = 0;
 		}

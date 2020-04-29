@@ -24,14 +24,20 @@ struct session {
 	bool talk;
 	int16_t bufsz;
 	int16_t jb_max;
+	int16_t silence_count;
+	FLAC__StreamMetadata *meta[2];
 };
 
 extern struct list sessionl;
 void slaudio_record_init(void);
-void slaudio_record_set(bool active);
+
+void slaudio_record_set(bool status);
+void slaudio_monorecord_set(bool status);
+void slaudio_monostream_set(bool status);
+void slaudio_mute_set(bool status);
+void slaudio_monitor_set(bool status);
+
 int slaudio_record_get_timer(void);
-void slaudio_mono_set(bool active);
-void slaudio_mute_set(bool active);
 const struct odict* slaudio_get_interfaces(void);
 void slaudio_set_driver(int value);
 void slaudio_set_input(int value);
