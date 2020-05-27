@@ -39,8 +39,8 @@ struct webapp {
 	enum ws_type ws_type;
 };
 
-enum webapp_call_state webapp_call_status;
-struct odict *webapp_calls;
+extern enum webapp_call_state webapp_call_status;
+extern struct odict *webapp_calls;
 
 
 /*
@@ -162,6 +162,11 @@ void slaudio_monorecord_set(bool status);
 void slaudio_monostream_set(bool status);
 void slaudio_mute_set(bool status);
 void slaudio_monitor_set(bool status);
+int slaudio_reset(void);
+void slaudio_set_driver(int value);
+void slaudio_set_input(int value);
+void slaudio_set_first_input_channel(int value);
+void slaudio_set_output(int value);
 
 #ifndef SLPLUGIN 
 /*
